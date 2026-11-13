@@ -1,0 +1,1195 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de lanzamiento - NASA</title>
+
+<style>
+:root {
+    --bg: #0e2345;
+    --panel: #101d30;
+    --line: #263b55;
+    --text: #edf4ff;
+    --muted: #a7b8ce;
+    --cyan: #50d5e8;
+    --orange: #ffb454;
+    --green: #64d6a0;
+    --purple: #b69cff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #08111f;
+    color: var(--text);
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+
+header {
+    padding: 35px 20px;
+    text-align: center;
+    background: linear-gradient(120deg, #10233c, #0b1728);
+    border-bottom: 1px solid var(--line);
+}
+
+header h1 {
+    font-size: 34px;
+    margin: 10px;
+}
+
+header p {
+    color: var(--muted);
+}
+
+.kicker {
+    color: var(--cyan);
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 330px 1fr;
+    gap: 18px;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+h2 {
+    font-size: 20px;
+    margin-top: 0;
+}
+
+.inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+label {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #34506e;
+    background: #081525;
+    color: white;
+}
+
+button {
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.primary {
+    background: var(--cyan);
+    color: #06131e;
+}
+
+.secondary {
+    background: #23364e;
+    color: white;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+.actions button {
+    flex: 1;
+}
+
+.note {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.status {
+    padding: 12px;
+    background: #132a32;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 13px;
+}
+
+.main {
+    display: grid;
+    gap: 15px;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.metric {
+    background: var(--panel);
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}
+
+.metric span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.metric strong {
+    display: block;
+    font-size: 20px;
+    margin-top: 6px;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.chartbox {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 15px;
+    border-radius: 12px;
+    min-width: 0;
+}
+
+canvas {
+    width: 100%;
+    height: 245px;
+    display: block;
+}
+
+.table-wrap {
+    overflow: auto;
+    max-height: 400px;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 750px;
+    font-size: 12px;
+}
+
+th, td {
+    padding: 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+
+th {
+    background: #1b2c43;
+    position: sticky;
+    top: 0;
+}
+
+.formulas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.formula {
+    padding: 15px;
+    background: #0a1728;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+}
+
+.formula code {
+    color: var(--cyan);
+}
+
+footer {
+    text-align: center;
+    color: var(--muted);
+    padding: 25px;
+}
+
+@media(max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width: 600px) {
+    .chart-grid, .formulas {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="kicker">PROYECTO DE MÉTODOS NUMÉRICOS</div>
+    <h1>🚀 Simulador de lanzamiento de un cohete</h1>
+    <p>NASA 1962 - Métodos de Euler, Heun y Runge-Kutta RK4</p>
+</header>
+
+<div class="container">
+
+<div class="layout">
+
+<!-- PARAMETROS -->
+
+<aside class="panel">
+
+<h2>Parámetros del cohete</h2>
+
+<div class="inputs">
+
+<div>
+<label>Masa (kg)</label>
+<input id="mass" type="number" value="1000" min="0.001" step="any">
+</div>
+
+<div>
+<label>Empuje (N)</label>
+<input id="thrust" type="number" value="15000" step="any">
+</div>
+
+<div>
+<label>Gravedad (m/s²)</label>
+<input id="gravity" type="number" value="9.81" min="0" step="any">
+</div>
+
+<div>
+<label>Resistencia k (kg/s)</label>
+<input id="drag" type="number" value="100" min="0" step="any">
+</div>
+
+<div>
+<label>Velocidad inicial (m/s)</label>
+<input id="v0" type="number" value="0" step="any">
+</div>
+
+<div>
+<label>Altura inicial (m)</label>
+<input id="y0" type="number" value="0" step="any">
+</div>
+
+<div>
+<label>Tiempo final (s)</label>
+<input id="duration" type="number" value="20" min="0.001" step="any">
+</div>
+
+<div>
+<label>Paso h (s)</label>
+<input id="step" type="number" value="2" min="0.0001" step="any">
+</div>
+
+</div>
+
+<div class="actions">
+<button class="primary" onclick="runSimulation()">
+Ejecutar simulación
+</button>
+
+<button class="secondary" onclick="resetValues()">
+Restablecer
+</button>
+</div>
+
+<p class="note">
+Modelo vertical con empuje, gravedad y resistencia lineal del aire.
+</p>
+
+<div id="message" class="status">
+Esperando ejecución de la simulación.
+</div>
+
+</aside>
+
+<!-- RESULTADOS -->
+
+<section class="main">
+
+<div class="metrics">
+
+<div class="metric">
+<span>Altura analítica final</span>
+<strong id="mHeight">—</strong>
+</div>
+
+<div class="metric">
+<span>Velocidad analítica final</span>
+<strong id="mVelocity">—</strong>
+</div>
+
+<div class="metric">
+<span>Método más preciso</span>
+<strong id="mBest">—</strong>
+</div>
+
+<div class="metric">
+<span>Iteraciones</span>
+<strong id="mSteps">—</strong>
+</div>
+
+</div>
+
+<!-- GRAFICAS -->
+
+<div class="chart-grid">
+
+<div class="chartbox">
+<h3>Velocidad respecto al tiempo</h3>
+<canvas id="velocityChart"></canvas>
+</div>
+
+<div class="chartbox">
+<h3>Altura respecto al tiempo</h3>
+<canvas id="heightChart"></canvas>
+</div>
+
+</div>
+
+<!-- TABLA DE ERRORES -->
+
+<div class="panel">
+
+<h2>Comparación de errores</h2>
+
+<div class="table-wrap">
+
+<table id="errorTable">
+
+<thead>
+<tr>
+<th>Método</th>
+<th>Velocidad</th>
+<th>Error velocidad</th>
+<th>Altura</th>
+<th>Error altura</th>
+<th>Error combinado (%)</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<div id="conclusion" class="status">
+Ejecuta la simulación para comparar los métodos.
+</div>
+
+</div>
+
+<!-- TABLA ITERACIONES -->
+
+<div class="panel">
+
+<h2>Tabla de resultados por iteración</h2>
+
+<div class="table-wrap">
+
+<table id="dataTable">
+
+<thead>
+<tr>
+<th>Tiempo</th>
+<th>Euler V</th>
+<th>Heun V</th>
+<th>RK4 V</th>
+<th>Exacta V</th>
+<th>Euler Y</th>
+<th>Heun Y</th>
+<th>RK4 Y</th>
+<th>Exacta Y</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</section>
+</div>
+
+<!-- FORMULAS -->
+
+<div class="panel">
+
+<h2>Modelo matemático</h2>
+
+<div class="formulas">
+
+<div class="formula">
+<b>1. Ecuación de velocidad</b>
+<p><code>dv/dt = T/m - g - (k/m)v</code></p>
+</div>
+
+<div class="formula">
+<b>2. Ecuación de altura</b>
+<p><code>dy/dt = v</code></p>
+</div>
+
+<div class="formula">
+<b>3. Método de Euler</b>
+<p><code>z(n+1) = z(n) + h*f(z(n))</code></p>
+</div>
+
+<div class="formula">
+<b>4. Método de Heun</b>
+<p><code>z* = z(n) + h*f(z(n))</code></p>
+<p><code>z(n+1) = z(n) + h/2*(k1+k2)</code></p>
+</div>
+
+<div class="formula">
+<b>5. Runge-Kutta de cuarto orden</b>
+<p><code>z(n+1) = z(n) + h/6*(k1+2k2+2k3+k4)</code></p>
+</div>
+
+<div class="formula">
+<b>6. Solución analítica</b>
+<p><code>lambda = k/m</code></p>
+<p><code>v(t)=v∞+(v0-v∞)*exp(-lambda*t)</code></p>
+<p><code>y(t)=y0+v∞*t+(v0-v∞)*(1-exp(-lambda*t))/lambda</code></p>
+</div>
+
+</div>
+
+<div class="status">
+<b>Justificación:</b> RK4 normalmente es el método más preciso para el mismo tamaño de paso, seguido por Heun y Euler. Sus órdenes globales son O(h⁴), O(h²) y O(h), respectivamente.
+</div>
+
+</div>
+
+</div>
+
+<footer>
+Simulador académico de Métodos Numéricos.
+Modelo educativo, no destinado al diseño de cohetes reales.
+</footer>
+
+<script>
+
+// ======================================
+// 1. PARAMETROS
+// ======================================
+
+const $ = id => document.getElementById(id);
+
+const defaults = {
+    mass: 1000,
+    thrust: 15000,
+    gravity: 9.81,
+    drag: 100,
+    v0: 0,
+    y0: 0,
+    duration: 20,
+    step: 2
+};
+
+const colors = {
+    Euler: "#ffb454",
+    Heun: "#64d6a0",
+    RK4: "#b69cff",
+    Exacta: "#50d5e8"
+};
+
+function getParams() {
+
+    const p = {};
+
+    Object.keys(defaults).forEach(id => {
+        p[id] = Number($(id).value);
+    });
+
+    if (Object.values(p).some(x => !Number.isFinite(x))) {
+        throw Error("Ingresa valores numéricos válidos.");
+    }
+
+    if (
+        p.mass <= 0 ||
+        p.gravity < 0 ||
+        p.drag < 0 ||
+        p.duration <= 0 ||
+        p.step <= 0
+    ) {
+        throw Error("Revisa los parámetros ingresados.");
+    }
+
+    if (Math.ceil(p.duration / p.step) > 5000) {
+        throw Error("Demasiadas iteraciones. Aumenta el paso h.");
+    }
+
+    return p;
+}
+
+// ======================================
+// 2. SOLUCION ANALITICA
+// ======================================
+
+function exact(t, p) {
+
+    const lambda = p.drag / p.mass;
+
+    const a = p.thrust / p.mass - p.gravity;
+
+    if (lambda === 0) {
+
+        return {
+            v: p.v0 + a * t,
+
+            y: p.y0 + p.v0 * t + 0.5 * a * t * t
+        };
+    }
+
+    const vinf = a / lambda;
+
+    const e = Math.exp(-lambda * t);
+
+    return {
+
+        v: vinf + (p.v0 - vinf) * e,
+
+        y: p.y0 + vinf * t +
+        (p.v0 - vinf) * (1 - e) / lambda
+
+    };
+}
+
+// ======================================
+// 3. SISTEMA DE ECUACIONES
+// ======================================
+
+function f(z, p) {
+
+    return {
+
+        v: p.thrust / p.mass -
+           p.gravity -
+           (p.drag / p.mass) * z.v,
+
+        y: z.v
+
+    };
+}
+
+function add(z, k, h) {
+
+    return {
+
+        v: z.v + h * k.v,
+
+        y: z.y + h * k.y
+
+    };
+}
+
+// ======================================
+// 4. METODOS NUMERICOS
+// ======================================
+
+function integrate(p, method) {
+
+    let z = {
+        v: p.v0,
+        y: p.y0
+    };
+
+    let t = 0;
+
+    const results = [
+        {t, ...z}
+    ];
+
+    while (t < p.duration - 1e-10) {
+
+        const h = Math.min(
+            p.step,
+            p.duration - t
+        );
+
+        // METODO DE EULER
+
+        if (method === "Euler") {
+
+            const k1 = f(z, p);
+
+            z = add(z, k1, h);
+
+        }
+
+        // METODO DE HEUN
+
+        else if (method === "Heun") {
+
+            const k1 = f(z, p);
+
+            const predictor = add(z, k1, h);
+
+            const k2 = f(predictor, p);
+
+            z = {
+
+                v: z.v + h * (k1.v + k2.v) / 2,
+
+                y: z.y + h * (k1.y + k2.y) / 2
+
+            };
+
+        }
+
+        // RUNGE KUTTA ORDEN 4
+
+        else {
+
+            const k1 = f(z, p);
+
+            const k2 = f(
+                add(z, k1, h / 2),
+                p
+            );
+
+            const k3 = f(
+                add(z, k2, h / 2),
+                p
+            );
+
+            const k4 = f(
+                add(z, k3, h),
+                p
+            );
+
+            z = {
+
+                v: z.v + h *
+                (k1.v + 2*k2.v + 2*k3.v + k4.v) / 6,
+
+                y: z.y + h *
+                (k1.y + 2*k2.y + 2*k3.y + k4.y) / 6
+
+            };
+
+        }
+
+        t += h;
+
+        results.push({
+            t,
+            ...z
+        });
+
+    }
+
+    return results;
+}
+
+// ======================================
+// 5. CALCULO DE ERRORES
+// ======================================
+
+function errorRelative(approx, exactValue) {
+
+    if (Math.abs(exactValue) < 1e-12) {
+        return null;
+    }
+
+    return Math.abs(
+        approx - exactValue
+    ) / Math.abs(exactValue) * 100;
+
+}
+
+function fmt(x, n = 4) {
+
+    return Number.isFinite(x)
+        ? x.toFixed(n)
+        : "—";
+
+}
+
+// ======================================
+// 6. GRAFICAS
+// ======================================
+
+function drawChart(canvas, series) {
+
+    const rect = canvas.getBoundingClientRect();
+
+    const dpr = window.devicePixelRatio || 1;
+
+    canvas.width = rect.width * dpr;
+
+    canvas.height = rect.height * dpr;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.scale(dpr, dpr);
+
+    const W = rect.width;
+    const H = rect.height;
+
+    const L = 48;
+    const R = 12;
+    const T = 12;
+    const B = 32;
+
+    const all = series.flatMap(s =>
+        s.data.map(d => d.value)
+    );
+
+    let min = Math.min(0, ...all);
+
+    let max = Math.max(0, ...all);
+
+    if (max - min < 1) {
+        max += 1;
+        min -= 1;
+    }
+
+    const pad = (max - min) * 0.1;
+
+    min -= pad;
+    max += pad;
+
+    const xMax = Math.max(
+        ...series[0].data.map(d => d.t),
+        1
+    );
+
+    const X = t =>
+        L + t / xMax * (W - L - R);
+
+    const Y = v =>
+        T + (max - v) / (max - min) *
+        (H - T - B);
+
+    ctx.font = "10px Arial";
+
+    ctx.strokeStyle = "#2b4058";
+
+    ctx.fillStyle = "#9eb0c6";
+
+    // EJES HORIZONTALES
+
+    for (let i = 0; i <= 5; i++) {
+
+        const val = min + (max - min) * i / 5;
+
+        const yy = Y(val);
+
+        ctx.beginPath();
+
+        ctx.moveTo(L, yy);
+
+        ctx.lineTo(W - R, yy);
+
+        ctx.stroke();
+
+        ctx.textAlign = "right";
+
+        ctx.fillText(
+            val.toFixed(1),
+            L - 7,
+            yy + 3
+        );
+
+    }
+
+    // EJES VERTICALES
+
+    for (let i = 0; i <= 5; i++) {
+
+        const t = xMax * i / 5;
+
+        const xx = X(t);
+
+        ctx.beginPath();
+
+        ctx.moveTo(xx, T);
+
+        ctx.lineTo(xx, H - B);
+
+        ctx.stroke();
+
+        ctx.textAlign = "center";
+
+        ctx.fillText(
+            t.toFixed(1),
+            xx,
+            H - 12
+        );
+
+    }
+
+    // DIBUJAR METODOS
+
+    series.forEach(s => {
+
+        ctx.strokeStyle = s.color;
+
+        ctx.lineWidth = 2.2;
+
+        ctx.beginPath();
+
+        s.data.forEach((d, i) => {
+
+            const x = X(d.t);
+
+            const y = Y(d.value);
+
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+
+        });
+
+        ctx.stroke();
+
+    });
+
+    ctx.fillStyle = "#9eb0c6";
+
+    ctx.textAlign = "center";
+
+    ctx.fillText(
+        "Tiempo (segundos)",
+        (L + W - R) / 2,
+        H - 1
+    );
+
+}
+
+// ======================================
+// 7. LEYENDAS
+// ======================================
+
+function legend() {
+
+    return Object.entries(colors).map(
+        ([name, color]) =>
+
+        `<span style="color:${color}; margin-right:12px">
+            ● ${name}
+        </span>`
+
+    ).join("");
+
+}
+
+// ======================================
+// 8. EJECUTAR SIMULACION
+// ======================================
+
+function runSimulation() {
+
+    try {
+
+        const p = getParams();
+
+        const methods = [
+            "Euler",
+            "Heun",
+            "RK4"
+        ];
+
+        const data = {};
+
+        methods.forEach(method => {
+
+            data[method] = integrate(p, method);
+
+        });
+
+        const count = data.Euler.length;
+
+        const exactData = data.Euler.map(d => ({
+            t: d.t,
+            ...exact(d.t, p)
+        }));
+
+        const final = exact(p.duration, p);
+
+        // INDICADORES
+
+        $("mHeight").textContent =
+            fmt(final.y, 3);
+
+        $("mVelocity").textContent =
+            fmt(final.v, 3);
+
+        $("mSteps").textContent =
+            count - 1;
+
+        // ERRORES
+
+        const summaries = methods.map(method => {
+
+            const z = data[method][count - 1];
+
+            const ev = Math.abs(z.v - final.v);
+
+            const ey = Math.abs(z.y - final.y);
+
+            const rv = errorRelative(z.v, final.v);
+
+            const ry = errorRelative(z.y, final.y);
+
+            const values = [rv, ry].filter(
+                x => x !== null
+            );
+
+            const combined = values.length
+                ? values.reduce((a,b) => a+b, 0) / values.length
+                : null;
+
+            return {
+                method,
+                z,
+                ev,
+                ey,
+                combined
+            };
+
+        });
+
+        const ranked = [...summaries].sort(
+            (a,b) =>
+            (a.combined ?? Infinity) -
+            (b.combined ?? Infinity)
+        );
+
+        $("mBest").textContent =
+            ranked[0].method;
+
+        // TABLA DE ERRORES
+
+        $("errorTable").querySelector("tbody").innerHTML =
+
+        [...summaries, {
+            method: "Analítica",
+            z: final,
+            ev: 0,
+            ey: 0,
+            combined: 0
+        }].map(s => `
+
+        <tr>
+            <td>${s.method}</td>
+
+            <td>${fmt(s.z.v)}</td>
+
+            <td>${fmt(s.ev)}</td>
+
+            <td>${fmt(s.z.y)}</td>
+
+            <td>${fmt(s.ey)}</td>
+
+            <td>${s.method === "Analítica"
+                ? "0.0000"
+                : s.combined === null
+                    ? "—"
+                    : fmt(s.combined, 5)}
+            </td>
+        </tr>
+
+        `).join("");
+
+        // TABLA DE ITERACIONES
+
+        $("dataTable").querySelector("tbody").innerHTML =
+
+        data.Euler.map((d, i) => {
+
+            const ex = exactData[i];
+
+            return `
+
+            <tr>
+
+                <td>${fmt(d.t, 3)}</td>
+
+                <td>${fmt(data.Euler[i].v)}</td>
+
+                <td>${fmt(data.Heun[i].v)}</td>
+
+                <td>${fmt(data.RK4[i].v)}</td>
+
+                <td>${fmt(ex.v)}</td>
+
+                <td>${fmt(data.Euler[i].y)}</td>
+
+                <td>${fmt(data.Heun[i].y)}</td>
+
+                <td>${fmt(data.RK4[i].y)}</td>
+
+                <td>${fmt(ex.y)}</td>
+
+            </tr>
+
+            `;
+
+        }).join("");
+
+        // PREPARAR SERIES DE GRAFICAS
+
+        function makeSeries(key) {
+
+            return [
+
+                ...methods.map(method => ({
+
+                    name: method,
+
+                    color: colors[method],
+
+                    data: data[method].map(d => ({
+
+                        t: d.t,
+
+                        value: d[key]
+
+                    }))
+
+                })),
+
+                {
+
+                    name: "Exacta",
+
+                    color: colors.Exacta,
+
+                    data: exactData.map(d => ({
+
+                        t: d.t,
+
+                        value: d[key]
+
+                    }))
+
+                }
+
+            ];
+
+        }
+
+        // GRAFICAS
+
+        drawChart(
+            $("velocityChart"),
+            makeSeries("v")
+        );
+
+        drawChart(
+            $("heightChart"),
+            makeSeries("y")
+        );
+
+        // CONCLUSION
+
+        const best = ranked[0];
+
+        $("conclusion").innerHTML = `
+
+        <b>${best.method}</b> obtuvo el menor error combinado.
+
+        Error: ${best.combined === null
+            ? "No calculable"
+            : fmt(best.combined, 6) + " %"}.
+
+        Para este tamaño de paso, el método más preciso es
+        ${best.method}.
+
+        RK4 tiene orden global O(h⁴), Heun O(h²)
+        y Euler O(h).
+
+        `;
+
+        $("message").textContent =
+            "Simulación completada correctamente.";
+
+    }
+
+    catch(error) {
+
+        $("message").textContent = error.message;
+
+    }
+
+}
+
+// ======================================
+// 9. RESTABLECER PARAMETROS
+// ======================================
+
+function resetValues() {
+
+    Object.keys(defaults).forEach(id => {
+
+        $(id).value = defaults[id];
+
+    });
+
+    runSimulation();
+
+}
+
+// ======================================
+// 10. INICIAR
+// ======================================
+
+window.addEventListener("load", () => {
+
+    runSimulation();
+
+});
+
+window.addEventListener("resize", () => {
+
+    runSimulation();
+
+});
+
+</script>
+
+</body>
+</html>
